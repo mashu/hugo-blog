@@ -1,0 +1,10 @@
+---
+title: "Migration from Jekyll to Hugo"
+date: 2018-04-29T13:23:12+02:00
+draft: false
+---
+
+* Introduction
+
+  Initially I started my blog using Jekyll, but it was problematic to use with Org-mode and required quite some hacks. Hugo can render org files natively, and from now on, I will stick to this platform.
+  
