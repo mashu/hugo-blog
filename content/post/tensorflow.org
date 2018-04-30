@@ -9,11 +9,12 @@ draft: false
   I am running GNU/Linux Debian with Nvidia 9.1 drivers and cuDNN 7.1.
 
   - Tensorflow-gpu pip packages are build for specific CUDA
-  - Cuda files from Debian packages are placed in different location than from usual installer
+  - CUDA Toolkit files from Debian packages are placed in different location than from conventional installer
     
-  That means that on GNU/Linux Debian, I can not use *pip* packages directly, since versions of libraries might not match. I can not also easily compile tensorflow source against CUDA Toolkit from packages, because of misplaced header files and shared objects.
+  That means that with GNU/Linux Debian packages, I can not use *pip* directly, since versions of libraries might not match. 
+  I can not also easily compile tensorflow source against latest CUDA Toolkit installed from packages, because of misplaced header files and shared objects.
   
-  I solve it by installing CUDA that matches version from packages using local insteller binary downloaded from Nvidia website. Only toolkit is required without drivers or examples. Than I build Python 3.6 package myself.
+  I solve it by installing CUDA Toolkit that matches version from packages by running local insteller downloaded from Nvidia website. Only toolkit is required without drivers or examples. Than I build package for Python.
   
 * Instructions
 ** Download tensorflow
@@ -50,7 +51,7 @@ draft: false
      apt-get install bazel
    #+END_SRC
 ** Compile tensorflow-gpu
-   Run *configure* script and give default ansers to most questions except CUDA which should be enabled. Pick gcc compiler as gcc-6. If you don't have gcc-6 installed
+   Run *configure* script and give default answers to most questions except CUDA which should be enabled. Pick the gcc compiler as gcc-6. If you don't have gcc-6 installed
 
    #+BEGIN_SRC bash
      apt-get install gcc-6 g++-6
@@ -63,7 +64,7 @@ draft: false
    #+END_SRC
    
 
-   Building binaries took roughly 2 hours on 8 cores i7-6700HQ CPU @ 2.60GHz. Next build and install the package
+   Building binaries took roughly 2 hours on 8 cores i7-6700HQ CPU @ 2.60GHz. Next build and install the python package
    
    #+BEGIN_SRC bash
        bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
@@ -72,22 +73,21 @@ draft: false
    #+END_SRC
 ** Run example
 #+BEGIN_EXAMPLE
-In [2]: model = Sequential()
-   ...: model.add(Dense(32, activation='relu', input_dim=100))
-   ...: model.add(Dense(1, activation='sigmoid'))
-   ...: model.compile(optimizer='rmsprop',
-   ...:               loss='binary_crossentropy',
-   ...:               metrics=['accuracy'])
-   ...: 
-   ...: # Generate dummy data
-   ...: import numpy as np
-   ...: data = np.random.random((1000, 100))
-   ...: labels = np.random.randint(2, size=(1000, 1))
-   ...: 
-   ...: # Train the model, iterating on the data in batches of 32 samples
-   ...: model.fit(data, labels, epochs=10, batch_size=32)
-   ...: 
-   ...: 
+model = Sequential()
+model.add(Dense(32, activation='relu', input_dim=100))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(optimizer='rmsprop',
+              loss='binary_crossentropy',
+              metrics=['accuracy']) 
+# Generate dummy data
+import numpy as np
+data = np.random.random((1000, 100))
+labels = np.random.randint(2, size=(1000, 1))
+ 
+# Train the model, iterating on the data in batches of 32 samples
+model.fit(data, labels, epochs=10, batch_size=32)
+ 
+
 Epoch 1/10
 2018-04-29 13:03:10.454166: I tensorflow/stream_executor/cuda/cuda_gpu_executor.cc:898] successful NUMA node read from SysFS had negative value (-1), but there must be at least one NUMA node, so returning NUMA node zero
 2018-04-29 13:03:10.454636: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1356] Found device 0 with properties: 
@@ -121,4 +121,3 @@ Out[2]: <keras.callbacks.History at 0x7fd1ef63eeb8>
 #+END_EXAMPLE
 
 It works now!
-
