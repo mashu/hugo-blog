@@ -39,3 +39,6 @@ paginate = 10
     identifier = "about"
     url = "/about/about"
 
+[social]
+github = "mashu"
+bitbucket = "mkaduk"
