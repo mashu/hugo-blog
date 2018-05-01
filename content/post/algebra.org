@@ -56,7 +56,7 @@ The following table shows 3 configurations tested
 
 #+CAPTION: Time in microseconds measured for different backends
 #+ATTR_HTML: :img
-[[file:/img/backends-fig1.png]]
+[[file:https://media.githubusercontent.com/media/mashu/mashu.github.io/master/img/backends-fig1.png]]
 
 * Summary
 With sufficiently large matrix *OpenBlas performs best* in computing crossproduct, inner product, inverse and singular value decomposition (svd). Worst is Blas which is not parallelized. 
