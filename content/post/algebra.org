@@ -1,0 +1,63 @@
+---
+title: "Algebra backends for R"
+date: 2018-05-01T09:08:08+02:00
+draft: false
+---
+
+* Goal
+
+Matrix operations in R are mostly executed by system-wide linear algebra library. Here I compare three different implementations: Blas, Atlas and OpenBlas.
+Benchmark is performed using microbenchmark 1.4 for R 3.4.4. All operations are carried out on matrix with 1000x1000 random entries which occupies approximetly 7.6Mb of RAM. 
+Computations were performed on 8 core Intel's i7-6700HQ CPU @ 2.60GHz. OpenBlas and Atlas utilzied all 8 cores, whereas Blas run only on single core, as noted by htop.
+
+Benchmark script accessing 4 common operations
+#+BEGIN_SRC R
+library(microbenchmark)
+
+x = matrix(runif(1000*1000),ncol=1000)
+m = microbenchmark("inner" = { x%*%t(x) },
+                   "crossprod" = {crossprod(x,x)},
+                   "inverse" = {solve(x)},
+                   "svd" = {svd(x)},
+                   times = 100)
+
+write.csv(m,'blas.txt')
+#+END_SRC
+
+I am using GNU/Linux Debian distribution, so backends were swapped by executing
+#+BEGIN_SRC bash
+update-alternatives --config libblas.so-x86_64-linux-gnu 
+update-alternatives --config libblas.so.3-x86_64-linux-gnu
+update-alternatives --config liblapack.so-x86_64-linux-gnu
+update-alternatives --config liblapack.so.3-x86_64-linux-gnu
+#+END_SRC
+
+The following table shows 3 configurations tested
+
+#+ATTR_HTML: :class table
+| Library | Path                    | Name     |
+|---------+-------------------------+----------|
+| Blas    | openblas/libblas.so     | OpenBlas |
+| Blas3   | openblas/libblas.so.3   | OpenBlas |
+| Lapack  | openblas/liblapack.so   | OpenBlas |
+| Lapack3 | openblas/liblapack.so.3 | OpenBlas |
+|---------+-------------------------+----------|
+| Blas    | atlas/libblas.so        | Atlas    |
+| Blas3   | atlas/libblas.so.3      | Atlas    |
+| Lapack  | atlas/liblapack.so      | Atlas    |
+| Lapack3 | atlas/liblapack.so.3    | Atlas    |
+|---------+-------------------------+----------|
+| Blas    | blas/libblas.so         | Blas     |
+| Blas3   | blas/libblas.so.3       | Blas     |
+| Lapack  | lapack/liblapack.so     | Blas     |
+| Lapack3 | lapack/liblapack.so.3   | Blas     |
+
+* Results
+
+#+CAPTION: Time in microseconds measured for different backends
+#+ATTR_HTML: :img
+[[file:/img/backends-fig1.png]]
+
+* Summary
+With sufficiently large matrix *OpenBlas performs best* in computing crossproduct, inner product, inverse and singular value decomposition (svd). Worst is Blas which is not parallelized. 
+Inversion of the matrix with OpenBlas had some issues with high variablility and outliers, so I repeated run with OpenBlas two more times and outliers disapeared in third run.
