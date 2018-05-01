@@ -4,5 +4,10 @@ date: 2018-04-29T15:27:07+02:00
 draft: false
 ---
 
-I am PhD student at Stockholm University, working in Bioinformatics.
-My interests are programming (Python, R, Julia), machine learning (Tensorflow, Keras) and broadly speaking data analysis.
+* Me
+I am PhD student at Stockholm University and my research field is Bioinformatics.
+My interests are programming (Python, R, Julia), machine learning (Tensorflow, Keras) and broadly speaking data analysis. 
+As for hobbies I enjoy designing, building and programming micro electronics as well as flying RC models.
+
+* Contact
+Mateusz Kaduk [[mailto: mateusz dot kaduk at gmail]]
