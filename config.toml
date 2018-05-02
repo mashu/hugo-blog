@@ -18,6 +18,7 @@ paginate = 10
   brand = "Blog"
   dateFormat = "02 Jan 2006, 15:04"
   highlightjs = "androidstudio"
+  custom_css = ["css/table.css"]
 
 [menu]
   # Shown in the side menu.
