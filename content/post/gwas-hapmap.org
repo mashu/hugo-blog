@@ -1,0 +1,71 @@
+---
+title: "Genome wide association studies"
+date: 2018-05-10T19:08:36+02:00
+draft: false
+---
+
+* Background
+Genome Wide Association Studies (GWAS) make use of genetic data that are a collection of genetic variants such as single nucleotide polymorphism (SNP) across large population. Such data can be used to find which genetic variants are associated with certain phenotype traits.
+
+Analysis requires two sources of information, genetic variant data for instance SNP for multiple individuals and data about their phenotype. The goal is to find which regions in the genome measured by means of SNPs co-vary with certain trait.
+
+* Data
+
+I will be using HapMap data cite:HapMap2010 which can be downloaded from [[ftp://ftp.ncbi.nlm.nih.gov/hapmap/genotypes/2009-01_phaseIII/plink_format/][link]].
+The *map* file contains SNP names, and *ped* file is for genotype information. 
+#+BEGIN_EXAMPLE
+hapmap3_pop/hapmap3_r2_b36_fwd.CEU.qc.poly.map
+hapmap3_pop/hapmap3_r2_b36_fwd.CEU.qc.poly.ped
+#+END_EXAMPLE
+
+
+I will use R package GenABEL cite:Aulchenko2007.
+First convert data to GenABEL format
+#+BEGIN_SRC R :session genabel :eval no
+  library(GenABEL)
+  convert.snp.ped(
+      pedfile = '/home/mateusz/Downloads/GWAS-Phaselll-01-2009/hapmap3_pop/hapmap3_r2_b36_fwd.CEU.qc.poly.ped',
+      mapfile = '/home/mateusz/Downloads/GWAS-Phaselll-01-2009/hapmap3_pop/hapmap3_r2_b36_fwd.CEU.qc.poly.map',
+      outfile = '/home/mateusz/Downloads/GWAS-Phaselll-01-2009/hapmap3_pop/hapmap3_r2_b36_fwd.CEU.qc.poly.out')
+#+END_SRC
+
+
+Load phenotype data, here sex and pedigree 
+#+BEGIN_SRC R :session genabel :eval no-export
+  library(GenABEL)
+  # Load tab-delimited file with phenotype data and fix factor levels
+  pheno = read.table('/home/mateusz/Downloads/GWAS-Phaselll-01-2009/relationships_w_pops_121708.txt',
+                     header = TRUE,stringsAsFactors = FALSE)
+  pheno$sex = pheno$sex -1
+  write.table(pheno,
+              '/home/mateusz/Downloads/GWAS-Phaselll-01-2009/pheno.txt')
+
+  # Load combined data
+  data = load.gwaa.data(
+      phenofile= "/home/mateusz/Downloads/GWAS-Phaselll-01-2009/pheno.txt",
+      genofile = "/home/mateusz/Downloads/GWAS-Phaselll-01-2009/hapmap3_pop/hapmap3_r2_b36_fwd.CEU.qc.poly.out",
+      id='IID')
+
+  # Quality check
+  qc = check.marker(data)
+
+  # Select samples and SNPs that are ok by default filtering
+  fdata = data[qc$idok,qc$snpok]
+  mdata = phdata(fdata)
+
+  nids(fdata)  # Number of individuals
+  nsnps(fdata) # Number of SNPs
+
+  # Fit logistic model, makes no sense, but just test the method
+  result = scan.glm("sex~CRSNP",
+                 data=fdata,
+                 family=binomial(),
+                 snps=(1:1000)) # Otherwise too long for this test
+
+  result$map[result$P1df < 0.05] # P-values testing association to select SNPs
+#+END_SRC
+
+
+bibliographystyle:unsrtnat
+bibliography:gwas.bib
+
