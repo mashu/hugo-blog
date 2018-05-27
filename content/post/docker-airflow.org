@@ -1,0 +1,110 @@
+---
+title: "Docker and Apache Airflow"
+date: 2018-05-27T19:35:21+02:00
+draft: false
+---
+* Objective
+I am going to show how to setup Apache's Airflow inside docker as a basic container for data analysis pipeline.
+
+* Docker
+Install docker
+#+BEGIN_SRC bash
+sudo apt-get install docker.io
+sudo adduser $USER docker
+sudo apt-get install debbootstrap
+# Relog
+#+END_SRC
+
+Now bootstrap *minbase* smallest variant of GNU/Linux Debian system
+#+BEGIN_SRC bash
+mkdir debian_root && cd debian_root
+sudo debootstrap --variant=minbase sid .
+#+END_SRC
+
+From *debian_root* directory, import it as docker image while tagging it 'raw'
+#+BEGIN_SRC bash
+sudo tar -c * | docker import - minidebian:raw
+#+END_SRC
+This gives reasonably small base image (~181M).
+
+Now create a [[https://docs.docker.com/engine/reference/builder/][Dockerfile]] for Debian with [[https://airflow.incubator.apache.org/][Apache Airflow]].
+This will be quick setup with [[https://sqlite.org][SQLit]]e default database and local workers.
+#+BEGIN_SRC bash
+mkdir -p docker ; cd docker
+cat << EOF >> Dockerfile
+FROM minidebian:raw
+LABEL description="Minimal GNU/Linux Debian"
+MAINTAINER Mateusz Kaduk <mateusz.kaduk@gmail.com>
+RUN apt-get update && apt-get install -y python3 python3-pip ipython3 && pip3 install apache-airflow[gcp_api]==1.8.2 && airflow initdb
+CMD ["/usr/local/bin/airflow","webserver"]
+EXPOSE 8080
+EOF
+#+END_SRC
+
+Build the final docker image
+#+BEGIN_SRC bash
+docker build . -t minidebian:latest
+#+END_SRC
+
+** Start container
+Start interactive container based on latest image, expose ports and bind dags directory
+#+BEGIN_SRC bash
+cd ..
+docker run -P -it --name python-gcloud -v /home/mateusz/Debian/airflow/:/root/airflow/dags minidebian:latest
+#+END_SRC
+
+Check on what port docker with airflow is on
+#+BEGIN_SRC bash
+sudo lsof -i -n | grep docker
+#+END_SRC
+
+go there with browser and additionally you can spawn shell to running container
+
+#+BEGIN_SRC bash
+docker exec -it python-gcloud "/bin/bash"
+# Other commands
+# docker start
+# docker stop
+#+END_SRC
+* Simple DAG
+
+As an example the following DAG can be constructed and placed in *dags* directory
+
+#+BEGIN_SRC python
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
+# from airflow.contrib.operators.gcs_download_operator import GoogleCloudStorageDownloadOperator
+from datetime import datetime, timedelta
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2018, 5, 27),
+    'email': ['mateusz.kaduk@gmail.com'],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5)
+}
+
+dag = DAG(
+    'data',
+    default_args=default_args,
+    schedule_interval="@once",
+    )
+    # schedule_interval=timedelta(1))
+ 
+# Tasks
+t1 = BashOperator(
+    task_id='print_date',
+    bash_command='date',
+    dag=dag)
+#+END_SRC
+
+To test simple task executing *date* bash command, run with your date
+#+BEGIN_SRC bash
+airflow test data gcs_download 2018-05-27
+#+END_SRC
+
+* Next
+In future posts, I plan to add tasks fetching data from Google Cloud Storage, processing them and producing reports.
