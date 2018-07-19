@@ -5,8 +5,7 @@ draft: false
 ---
 
 * Me
-I am PhD student at Stockholm University and my research field is Bioinformatics.
-My interests are programming (Python, R, Julia), machine learning (Tensorflow, Keras) and broadly speaking data analysis. 
+I am a computational biologist at Karolinska Institute and my research field is Bioinformatics. My interests are programming (Python, Julia, R), machine learning (Tensorflow, Keras), high performance cloud computing (Dask, Celery) and broadly speaking data analysis.
 As for hobbies I enjoy designing, building and programming micro electronics as well as flying RC models.
 
 * Contact
