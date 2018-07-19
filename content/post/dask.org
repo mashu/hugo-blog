@@ -1,0 +1,76 @@
+---
+title: "Dask and local Kubernetes (minikube)"
+date: 2018-07-19T17:19:41+02:00
+draft: false
+---
+
+* Motivation
+
+I want to use [[https://dask.pydata.org/en/latest/][Dask]] which implements Numpy and Pandas API to operate on data distributed over compute cluster [[https://kubernetes.io][Kubernetes]]. This approach enables easy scaling up of available resources on demand, using cloud services.
+
+* Setup
+
+First, 
+#+BEGIN_SRC bash
+sudo apt-get install qemu-kvm libvirt-clients libvirt-daemon-system
+sudo adduser $USER libvirt
+sudo adduser $USER libvirt-qemu
+
+virsh --connect qemu:///system list --all # To check that all is fine
+#+END_SRC
+
+Now install single cluster node variant of kubernetes
+
+#+BEGIN_SRC bash
+curl -LO https://github.com/kubernetes/minikube/releases/download/v0.25.0/minikube_0.25-0.deb
+dpkg — force-depends -i minikube_0.25–0.deb
+
+curl -LO https://storage.googleapis.com/minikube/releases/latest/docker-machine-driver-kvm2 && chmod +x docker-machine-driver-kvm2 && sudo mv docker-machine-driver-kvm2 /usr/local/bin/
+#+END_SRC
+
+Start minikube with kvm
+
+#+BEGIN_SRC bash
+minikube --memory 8192 --cpus 2 start --vm-driver kvm2 
+#+END_SRC
+
+Result is
+
+#+BEGIN_EXAMPLE
+Starting local Kubernetes v1.10.0 cluster...
+Starting VM...
+Getting VM IP address...
+Moving files into cluster...
+Setting up certs...
+Connecting to cluster...
+Setting up kubeconfig...
+Starting cluster components...
+Kubectl is now configured to use the cluster.
+Loading cached images from config file.
+#+END_EXAMPLE
+
+Now minikube is ready, start dashboard
+
+#+BEGIN_SRC bash
+minikube dashboard
+#+END_SRC
+
+Currently we are using minikube cluster, but this can be switched in future
+#+BEGIN_SRC bash
+kubectl config get-contexts
+#+END_SRC
+
+* Execute Python on cluster
+#+BEGIN_SRC python
+  from dask_kubernetes import KubeCluster
+  cluster = KubeCluster.from_yaml('worker-spec.yml')
+
+  import dask.dataframe as dd
+  df = dd.demo.make_timeseries('2000-01-01', '2000-12-31', freq='1s', partition_freq='1M',
+                               dtypes={'name': str, 'id': int, 'x': float, 'y': float})
+
+  df2 = df[df.y > 0]
+  df3 = df2.groupby('name').x.std()
+  # This runs on cluster
+  computed_df = df3.compute()
+#+END_SRC
