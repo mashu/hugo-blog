@@ -1,0 +1,145 @@
+---
+title: "Deeplearn week 1"
+date: 2018-12-30T08:57:37+01:00
+draft: false
+---
+
+* Notes from Deep learning course
+
+  I recently started Deep learning course by Andrew Ng.
+  In the first week we talk about logistic regression as a toy example to introduce basic concepts, such as forward and reverse propagation, computational graph and gradient descent.
+  
+  I usually remember better if I try explaining concepts to someone else, hence these notes serve such a purpose and follow my understanding of the content in the course.
+  
+** Relation to linear regression
+
+   In logistic regression, dependent variable is modelled as a probability of seeing a binary outcome.
+   We start with linear regression model which assumes continuous normally distributed values of dependent variable.
+
+   $$
+     \mathbf{y} = \mathbf{X\beta} + \mathbf{\epsilon}
+   $$
+  
+   Similarly, for logistic regression we call coefficients as weights $\mathbf{w}$, drop error term from the model and apply aforementioned $\Sigma$ sigmoid function
+   $$
+   \Sigma(z)=\frac{1}{1+e^{-z}}
+   $$
+   $$
+   z = \mathbf{W x}+\mathbf{b}
+   $$
+   where $\mathbf{b}$ is the intercept term. In this course intercept is modelled as separate and not as usual notation with column of ones.
+   
+   Important to note is that we can now use familiar linear regression model with sigmoid function applied after computing dot product to get a logistic regression.
+   This is particularly important later to keep in mind, when we compute gradients and update model parameters.
+
+** Loss and cost function
+
+   We defined *loss function* as logistic function for a single example
+
+   $$\mathcal{L}(\hat{y}^{(i)},y^{(i)}) = - (y^{(i)} log\hat{y}^{(i)} + (1-y^{(i)})log(1-\hat{y}^{(i)}))$$
+
+   Behaviour of function when dependent variable $y$ is either 0 or 1 is explained.
+   To calculate overall cost across all training examples, we define *cost function* as
+   $$J(w,b) = \frac{1}{m}\sum\limits^m_{i=1}\mathcal{L}(\hat{y}^{(i)},y^{(i)})$$
+   which is just the average of outcomes from multiple loss functions
+   $$J(w,b) = -\frac{1}{m}\sum\limits^m_{i=1}(y^{(i)} log\hat{y}^{(i)} + (1-y^{(i)})log(1-\hat{y}^{(i)}))$$
+   
+** Gradient explained
+
+   A little bit of digression here. I was wondering how gradient descent relates to normal equations.
+   I found that normal equations require calculating inverse which must exist and calculating that inverse is higher computational complexity than calculating gradients (for proof, google yourself).
+   
+   For non-convex problems, stochastic gradient descent can be used (not encountered yet in this course).
+   For convex problems such as logistic regression, we use gradient descent. Parameters \mathbf{w}$ are repeatedly updated, given $\alpha$ learning rate. 
+
+   Learning rate determines how large steps we take to arrive at minimum. How to tune this parameter is nicely explained in previous Machine Learning course by Andrew Ng.
+   
+   Derivative (slope) of a function can be positive or negative, determining if $w$ should be increased or decreased. For more parameters it is a partial derivative of course.
+   
+   $$ w = w - \alpha \frac{\delta J(w,b)}{\delta w}$$
+   $$ b = b - \alpha \frac{\delta J(w,b)}{\delta b}$$
+   
+   Recall that parameters must be updated simultaneously.
+
+** Computational graph
+
+   
+Computational graph is a way to calculate derivatives for more complicated functions.
+
+   - Forward step keeps information how calculations were performed and associated values
+   - Backward step calculates derivatives
+   
+Simple toy example
+   $$J(a,b,c) = 3(a+bc)$$
+
+Forward steps, keeps single operations and associated values computer from initial $a,b,c$ parameters
+   $$u = bc$$
+   $$v = a+u$$
+   $$J = 3v$$
+   
+Backward steps, starts from the right, computes derivative for last the operation
+  $$\frac{dJ}{dv} = 3$$
+  then we keep going backwards and use chain rule to calculate rate how $J$ changes when we change $a$ for each step
+  $$\frac{dJ}{da} = \frac{dJ}{dv}\frac{dv}{da}$$
+  which is just a multiplication of computed derivatives from the right. This way we arrive at the slopes for the input variables which are our *gradients*.
+  
+  Recall that gradient tells us if we should increase or decrease parameter we aim to update and how "fast" by steepness of the slope.
+  
+** Vectorization
+   
+   In order to take advantage of hardware vector operations, we must avoid using loops. 
+
+   My colleague had an argument that in compiled programming languages like Julia loops are efficient and it's not necessary to vectorize the code. My *opinion* is that it probably depends on how good the compiler is in guessing how to vectorize your code and it might pay off to do it right from the start.
+   
+   
+   In logistic regression we will need to compute for $n$ features and $m$ examples many
+
+   $$z^{(n)} = w^tx^{(n)}+b$$
+   $$a^{(n)} = \sigma(z^{(n)})$$
+   
+   so for each $n$-th feature we find a $w,b$ coefficients.
+
+   This can be simplified using matrix notation by stacking $x^{(n)}$ vectors as columns as
+   $$ [z \ldots ] = [w \ldots]^t \mathbf{X} + [b \ldots] $$
+   equivalent to
+   $$ \mathbf{z} = \mathbf{w}^t \mathbf{X} + \mathbf{b}$$
+   
+   Note, $b$ is 1 by 1 matrix, but thanks to **broadcasting** in python it gets expanded to 1 by m vector, matching the dimensions of the earlier dot product.
+   
+   
+** Vectorized computation for gradients
+   
+   Recall that for one training example we had cost function as an average of individual losses
+   $$J(w,b) = \frac{1}{m} \sum\limits^m_{i=1} \mathcal{L}(a^{(i)}, y^{(i)})$$
+   where $a$ is
+   $$a^{(i)} = \hat{y}^{(i)} = \sigma(z^{(i)}) = \sigma(w^t x^{(i)}) + b)$$
+   with $i$ being examples and $\sigma$ a sigmoid function.
+
+   To obtain gradients given our overall cost function including $w$ parameters we want to estimate, we take derivative of the whole cost function with respect to parameters $w$
+   $$\frac{\delta J}{\delta w} J(w,b)$$
+
+   This is equivalent to average of computed derivatives for individual losses, which we know already how to calculate with a help of computational graph
+   $$\frac{\delta J}{\delta w} J(w,b) = \frac{1}{m} \sum\limits^m_{i=1} \underbrace{\frac{\delta J}{\delta w} \mathcal{L}(\sigma(w^t x^{(i)}) + b), y^{(i)})}_{dw^{(i)}}$$
+   
+   
+   Simplifying, to compute derivative for $w$ parameter we just compute
+   $$ dw = \frac{1}{m} \sum\limits^{m}_{i=1} dz^{(i)}$$
+   and from the course using computational graph we found that 
+   $$ dz^{(i)} = a^{(i)} - y^{(i)}$$
+
+   Therefore to find derivative for J with respect to $w$ we can calculate
+   $$ dw = \frac{1}{m} \sum\limits^{m}_{i=1} x^{(i)}(a^{(i)} - y^{(i)}) $$
+
+   Note $x$ in the above equations, in the course we do $J(a,b,c)$ example with just parameter we estimate, so I got lost a bit why we multiply by $x$ now which is our data (we dont estimate).
+   I am not sure if this is perfectly correct, but my intuition is that derivative must depend on $x$ at any point and therefore we multiply to obtain $dw$.
+   
+   To vectorize these operations we can compute derivatives with respect to $b$ and $w$
+   $$ db = \frac{1}{m} \sum\limits^m_{i=1} dz^{(i)} $$
+   and 
+   $$ dw = \frac{1}{m} \mathbf{X} dZ^t $$
+   
+   and use these to update parameters in single iteration of gradient descent
+   $$ w := w - \alpha dw$$
+   $$ b := b - \alpha db$$
+   
+   
