@@ -1,1 +1,2 @@
 *.png filter=lfs diff=lfs merge=lfs -text
+static/img/deeplearn-w4-fig1.svg filter=lfs diff=lfs merge=lfs -text
