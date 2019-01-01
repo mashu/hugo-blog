@@ -1,0 +1,144 @@
+---
+title: "Deeplearn week 3"
+date: 2018-12-31T08:50:11+01:00
+draft: false
+---
+* Third week
+  
+  This is just a reminder, that material is not my own and comes from the course [[https://www.coursera.org/learn/neural-networks-deep-learning][Deep learning]] by Andrew Ng.
+  Posts are just my notes I made while taking this course.
+  
+* Two layer network
+
+In previous week we used simple logistic regression as toy example simple netural network with just single output node.
+
+For inputs \(x,w,b\) we had the following computational graph
+$$z=\mathbf{w}^t x+b$$
+$$a=\sigma(z)$$
+$$\mathcal{L}(a,y)$$
+
+In this week we are going to use 2 layer network, with single output and multiple hidden nodes. To construct such a network, we are going to repeat logistic regression operations twice (for each layer) with an exception that hidden layer has multiple nodes.
+
+New notation is introduced, super-script *square brackets* denote which layer it is and we have higher dimensions for \(w\) weights and \(b\) biases to represent multiple nodes in current layer (hidden layer in this case).
+
+First layer
+$$\underbrace{\mathbf{z}^{[1]}}_{(4,1)} = \underbrace{\mathbf{W}^{[1]}}_{(4,3)}\underbrace{\mathbf{x}}_{(3,1)}+\underbrace{\mathbf{b}^{[1]}}_{(4,1)}$$
+$$\underbrace{\mathbf{a}^{[1]}}_{(4,1)} = \sigma(\underbrace{\mathbf{z}^{[1]}}_{(4,1)} )$$
+
+Second layer
+$$\underbrace{\mathbf{z}^{[2]}}_{(1,1)} = \underbrace{\mathbf{W}^{[2]}}_{(1,4)}\underbrace{\mathbf{x}}_{(4,1)}+\underbrace{\mathbf{b}^{[2]}}_{(1,1)}$$
+$$\underbrace{\mathbf{a}^{[2]}}_{(1,1)} = \sigma(\underbrace{\mathbf{z}^{[2]}}_{(1,1)})$$
+
+Then \(\mathbf{a}^{[2]}\) which is a row number becomes an output \( \hat{y} \).
+
+* Vectorizing across multiple examples
+  
+  We started this week with matrix notation for multiple nodes in a multi-layer network and for single example we obtain the following mapping
+
+  $$x \rightarrow a^{[2]} = \hat{y}$$
+
+  However we need to compute this for multiple \(m\) examples as \(x\) is in fact a vector \(\underbrace{\mathbf{x}}_{(m,1)}\).
+
+  So for not vectorized implementation we need to compute the following in a loop for each \(i \in m\)
+  
+  $$\mathbf{z}^{[1](i)} = \mathbf{W}^{[1]}\mathbf{x}^{(i)}+\mathbf{b}^{[1]}$$
+  $$\mathbf{a}^{[1](i)} = \sigma(\mathbf{z}^{[1](i)})$$
+  $$\mathbf{z}^{[2](i)} = \mathbf{W}^{[2]}\mathbf{x}^{(i)}+\mathbf{b}^{[2]}$$
+  $$\mathbf{a}^{[2](i)} = \sigma(\mathbf{z}^{[2](i)})$$
+  
+  which by stacking all \(m\) examples horizontally as columns simplifies to
+  $$\mathbf{Z}^{[1]} = \mathbf{W}^{[1]}\mathbf{X}^{}+\mathbf{b}^{[1]}$$
+  $$\mathbf{A}^{[1]} = \sigma(\mathbf{Z}^{[1]})$$
+  $$\mathbf{Z}^{[2]} = \mathbf{W}^{[2]}\mathbf{X}^{}+\mathbf{b}^{[2]}$$
+  $$\mathbf{A}^{[2]} = \sigma(\mathbf{Z}^{[2]})$$
+  
+  Lots of redundant equations which could just be presented in matrix notation right away, but on another hand this helps me to get a better understanding on how dimensions are arranged (following the same logic as in the course).
+  
+  Values for example at \(\mathbf{a}^{[1](2)}\) corresponds to vector containing activations for the first hidden unit on the second example. In matrices horizontally are different examples, and vertically are different hidden units.
+  
+* Different activation functions
+  
+** Sigmoid
+   Goes between 0 and 1.
+
+   $$ \sigma(z) = \frac{1}{1+e^{-z}} $$
+   
+   Never use this, except for binary classification output node.
+   
+** Tanh (hyperbolic tangent)
+   Goes between -1 and 1.
+   
+   $$ \phi(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}$$
+
+   Explanation is that because values of activations that come out of hidden layer are shifted around zero it has an effect similar to mean centring the data and it "almost always works better".
+   
+   Preferred over sigmoid for hidden layers.
+   
+** ReLU (rectified linear unit)
+
+   If \(z\) is very large or very small, previous functions have a disadvantage that the derivative for this function becomes very small and this can slow down gradient descent algorithms.
+   
+   Sometimes this is used to deal with that problem
+   
+   $$\psi(z) = max(0,z)$$
+
+   Derivative is undefined for z being zero, but chances of that are very small and it can also be set to very small value.
+   
+   This function is the default choice in most cases for hidden units.
+   
+** Leaky ReLU
+
+   Instead of flat zero for negative \(z\) values you get a slight slope, which might work better than ReLU.
+   
+\begin{equation}
+  \psi(z)=\begin{cases}
+    z, & \text{if $z>0$}.\\
+    0.01z, & \text{otherwise}.
+  \end{cases}
+\end{equation}
+
+   However, ReLU often works good enough.
+   
+* Why activation function
+  
+  Why do neural networks need an activation function at all?
+  
+  If we changed
+  $$a^{[1]} = \sigma^{[1]}(z^{[1]})$$
+  to
+  $$a^{[1]} = z^{[1]} = W^{[1]}x^{[1]}b^{[1]}$$
+  
+  we would be just calculating linear combination of input features.
+  
+  If we had linear activation function or equivalently no activation function, the composition of linear functions in hidden layer (as we have multiple units) becomes also a linear function itself. This prevents us from composing more complex functions despite the depth of the network, making hidden layer useless. Exception is an output layer, in which case we would be interested in solving a regression problem with \(y\) taking continues values.
+    
+* Derivative of activation functions
+  
+  This section just follows rules from calculus.
+  
+** For Sigmoid
+  $$\sigma(z) = \frac{1}{1+e^{-z}}$$
+  from calculus we obtain slope at \(z\)
+  $$\frac{d\sigma}{dz}\sigma(z) = \frac{1}{1+e^{-z}}(1-\frac{1}{1+e^{-z}}) = \sigma(z)(1-\sigma(z)) = a(1-a)$$
+  
+** For Tanh
+  $$ \phi(z) = \frac{e^z - e^{-z}}{e^z + e^{-z}}$$
+  simplifies to
+  $$ \frac{d\phi}{dz}= 1-\phi(z)^2 = 1-a^2$$
+  
+** For ReLU
+
+   
+  \begin{equation}
+  \frac{d\psi}{dz} \psi(z)=\begin{cases}
+    0, & \text{if $z<0$}.\\
+    1, & \text{if $z>0$}. \\
+    \textrm{undef}, & \text{if $z=0$}.
+  \end{cases}
+\end{equation}
+  In practice people set derivative to zero, when \(z\) is zero, but chances of that happening are very small.
+  
+* Random initialisation
+
+  For weights \(w\), we need to initialize them randomly, otherwise every unit will be computing the same thing, and algorithm cannot break out of symmetry.
+  
