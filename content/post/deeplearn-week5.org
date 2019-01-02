@@ -1,0 +1,113 @@
+---
+title: "Deeplearn week 5"
+date: 2019-01-02T09:20:55+01:00
+draft: false
+---
+
+* Bias and variance
+In machine learning we talk about trade-off between bias and variance.
+
+  - _Training set_ not performing well (*high bias*)
+  - _Test set_ not performing well (*high variance*)
+
+  Whether it performs well or not we judge by accuracy. However, we need to know baseline accuracy (i.e human or other algorithms).
+
+** High bias
+
+   We look at train set performance and can try
+
+   - Bigger network (more layers, units)
+   - Train longer
+   - Better suited NN architecture for the problem
+   
+** High variance
+   
+   We look at test set performance and can try
+
+   - Train more data
+   - Regularisation
+
+** Recipe   
+How much of variance or bias is the problem, lets you select first on what to improve. Furthermore
+
+  - Training bigger network, usually deals with /high bias/ problem, without affecting variance too much
+  - Adding more data, usually deals with /high variance/ problem, without affecting biases too much
+    
+  So these are the rule of thumb things to try first.
+
+* Regularisation
+  
+  It can increase /bias/ slightly, but helps to prevent over-fitting.
+  
+** L2 regularisation
+   
+   $$J(w,b)=\frac{1}{m}\sum\limits^{m}_{i=1}\mathcal{L}(\hat{y}^{(i)},y^{(i)}) + \color{blue}{\frac{\lambda}{2m} {\lVert w\rVert}^2 }$$
+   and this additional term is called \(L_2\) regularisation, because euclidean norm is used
+   
+   $$ \frac{\lambda}{2m} {\lVert w\rVert}^2 = \frac{\lambda}{2m} \sum\limits^{n_x}_{j=1} w^2_j = \frac{\lambda}{2m} \mathbf{w}^T \mathbf{w} $$
+
+   Because \( b \) is just single parameter and most parameters are in \(w\), only the later is regularised, as for \(b\) it would not change much and therefore \(\frac{\lambda}{2m} b^2\) is omitted.
+   
+** L1 regularisation
+
+   If you want \( w \) to become sparse with lots of zeros, one can use L1 regularisation
+   
+   $$ \frac{\lambda}{2m} {\lvert w\rvert} $$
+
+   Although L2 is used more commonly.
+   
+** Regularisation parameter
+
+   It is another hyper-parameter, which is optimised using *hold-out* set. 
+
+** Regularisation for neural networks
+
+   Similar to logistic regression, we apply regularisation in neural networks with
+
+   $$ \frac{\lambda}{2m} {\lvert \mathbf{W}^{[l]} \rvert}^2 = \sum\limits_i^{n^{[l-1]}}\sum\limits_j^{n^{[l]}} ( w_{ij}^{[l]})^2$$
+   
+   Which is just a /Forbenius norm/ for the \(\mathbf{W}\) matrix.
+   
+** Derivatives
+   
+   Because we updated our cost function, with a regularisation term, we also need to update our derivative for L2 case it is
+
+   $$ \mathbf{W}^{[l]} := \mathbf{W}^{[l]} - \alpha [ \color{red}{\frac{1}{m} \underbrace{\mathbf{X} \underbrace{(A-Y)^{T}}_{dZ^{T}}}_{dW} } + \color{blue}{\frac{\lambda}{m} \mathbf{W}^{[l]} } ] $$
+   
+   where red part of an equation comes from the *back-propagation* step and is just a Jacobian \(dW\) (matrix of first order derivatives). The blue part is the derivative for L2 norm respectively.   
+   
+   Simplifying above becomes
+   
+   $$ \mathbf{W}^{[l]} := \mathbf{W}^{[l]} - \frac{\alpha\lambda}{m} \mathbf{W}^{[l]} - \lambda\; \color{red}{dW} $$
+   
+   
+** Intuition
+
+   How regularisation works is that \(\lambda\) parameter, the higher it is, the more weights are shrunk towards zero, reducing their impact and moving from high variance towards high bias case. The intermediate value of \(\lambda\) parameter should therefore allow to set a good trade-off between high bias and high variance.
+   
+* Dropout
+
+  For each layer we have a probability of eliminating a node and we end up with much smaller network. Then we do back-propagation. Process is iteratively performed for each training example. 
+  
+  *Inverted dropout* implementation given our standard equation
+
+  $$ \mathbf{Z}^{[l]} = \mathbf{W}^{[l]} \mathbf{A}^{[l-1]} + \mathbf{b}^{[l]} $$
+  
+  - Compute matrix from \(A^{[l]}\) for which to keep values with certain probability
+  - Element wise multiply original \(A^{[l]}\) to zero out elements we remove to get \(A^{[l]_d}\)
+  - Adjust dropped values in \(A^{[l]_d}\) so the expected value of \(Z^{[l]}\) is correct by dividing element-wise \(A^{[l]_d}\) by the probability of keeping input values.
+
+  This is only used only at *training set* and not on prediction step.
+  
+** Intuition
+
+   Network can't rely on all units, therefore it has to spread out it's "bets" to remaining units. This will have an effect similar to shrinking weights, similar to L2 penalty, except that with regularisation different penalties are applied to different nodes. Regularisation of L2 penalty type might be more adaptive to scale of different inputs.
+   
+   
+   Downside of drop-out is that \(J\) cost function is not well defined, because for each layer, we drop units randomly. It's just harder to reason about performance of gradient descent in iteration vs cost plot. To evaluate performance it's good to turn off drop-out.
+   
+* About notes
+  
+  This is just a reminder, that material is not my own and comes from the course [[https://www.coursera.org/learn/neural-networks-deep-learning][Deep learning]] by Andrew Ng.
+  Posts are just my notes and digressions which help me to memorise the material.
+
