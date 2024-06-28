@@ -1,6 +1,3 @@
-[submodule "public"]
-	path = public
-	url = git@github.com:mashu/mashu.github.io.git
 [submodule "themes/blackburn"]
 	path = themes/blackburn
 	url = https://github.com/yoshiharuyamashita/blackburn
